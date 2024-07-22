@@ -3,6 +3,11 @@ package dev.gbenga.turner
 import android.util.Log
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateValueAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -14,6 +19,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -40,6 +46,7 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -56,6 +63,8 @@ fun Turner(
         mutableStateOf(Size.Zero)
     }
 
+    val coroutineScope = rememberCoroutineScope()
+
     var turnerRotateDegree by remember {
         mutableFloatStateOf(0f)
     }
@@ -68,6 +77,53 @@ fun Turner(
         mutableStateOf(Color.Gray)
     }
 
+    var outerCircleState by remember {
+        mutableStateOf(true)
+    }
+
+    var iconAnimationState by remember {
+        mutableFloatStateOf(0f)
+    }
+    var durationAnimationState by remember {
+        mutableIntStateOf(100)
+    }
+
+
+    var iconXY by remember {
+        mutableFloatStateOf(0f)
+    }
+
+    val radiusAnimation = remember { Animatable(0f) }
+
+    val iconAnimation by animateFloatAsState(targetValue = iconAnimationState, label = "asState",
+        animationSpec = tween(
+        durationMillis = durationAnimationState,
+        easing = LinearEasing
+    ))
+
+    // Icon rotat
+    val iconRotationAnimation = remember { Animatable(0f) }
+
+    val outerCircleRadius = size.width / 2
+
+    LaunchedEffect(outerCircleState) {
+        coroutineScope.launch {
+            if(outerCircleState){
+                iconAnimationState = 0f
+                iconRotationAnimation.animateTo(-90f)
+                radiusAnimation.animateTo(0f)
+            }else{
+                iconAnimationState = 1f
+                radiusAnimation.animateTo(outerCircleRadius)
+                iconRotationAnimation.animateTo(0f)
+            }
+        }
+    }
+
+
+
+    Log.d("detectTapGestures", "${radiusAnimation.value} $outerCircleRadius")
+
     Box(modifier = modifier
         .onGloballyPositioned { layoutCoords ->
             size = layoutCoords.size.let {
@@ -76,10 +132,12 @@ fun Turner(
                     height = it.height.toFloat()
                 )
             }
-        }.pointerInput(Unit){
+        }
+        .pointerInput(Unit) {
+
             detectTapGestures {
+                outerCircleState = !outerCircleState
                 turnerRotateDegree += 40
-                Log.d("detectTapGestures", "${it.x}")
             }
 
         }
@@ -87,26 +145,15 @@ fun Turner(
             //val center =
             onDrawWithContent {
 
-                var outerCircleRadius = size.width / 2
                 val smallCircleRadius = size.width / 3.5f
 
                 drawCircle(
                     color = controlColor,
-                    radius = outerCircleRadius,
+                    radius = radiusAnimation.value,
                     center = Offset(x = size.width / 2, y = size.height / 2),
                     //style = Stroke(width = outerCircleRadius)
                 )
 
-                iconsToDraw.forEach { pairOfIcons ->
-                    with(pairOfIcons) {
-                        translate(
-                            left = (size.width / 5) + (outerCircleRadius / 2),
-                            top = size.height / 2
-                        ) {
-                            draw(pairOfIcons.intrinsicSize)
-                        }
-                    }
-                }
 
                 drawCircle(
                     color = Color(0xFF131415),
@@ -174,71 +221,108 @@ fun Turner(
                 val placeableStartY = outerCircleRadius + 300
 
                 with(iconsToDraw[0]) {
-                    arrange(
-                        x = outerCircleRadius - (iconsToDraw[0].intrinsicSize.width / 2),
-                        y = placeableStartY - (innerStrokeRadius - (iconsToDraw[0].intrinsicSize.height / 2))
-                    ) {
-                        draw(iconsToDraw[0].intrinsicSize,
-                            colorFilter = ColorFilter.tint(color = iconColor))
-                    }
-                }
 
-                with(iconsToDraw[1]) {
-                    arrange(
-                        x = outerCircleRadius - (iconsToDraw[1].intrinsicSize.width / 2),
-                        y = placeableStartY * 1.82f
-                    ) {
-                        draw(iconsToDraw[1].intrinsicSize,
-                            colorFilter = ColorFilter.tint(color = iconColor))
-                    }
-                }
-
-                with(iconsToDraw[2]) {
-                    // Left icon
-                    arrange(
-                        x = outerCircleRadius - (outerCircleRadius / 1.5f),
-                        y = placeableStartY
-                    ) {
-                        draw(iconsToDraw[2].intrinsicSize,
-                            colorFilter = ColorFilter.tint(color = iconColor))
-                    }
-
-                }
-
-                with(iconsToDraw[3]) {
-                    arrange(
-                        x = outerCircleRadius - (outerCircleRadius / 1.4f),
-                        y = placeableStartY + 500
-                    ) {
-                        draw(iconsToDraw[3].intrinsicSize,
-                            colorFilter = ColorFilter.tint(color = iconColor))
+                    rotate(iconRotationAnimation.value) {
+                        arrange(
+                            x = outerCircleRadius - (iconsToDraw[0].intrinsicSize.width / 2),
+                            y = placeableStartY - (innerStrokeRadius - (iconsToDraw[0].intrinsicSize.height / 2))
+                        ) {
+                            draw(
+                                iconsToDraw[0].intrinsicSize,
+                                colorFilter = ColorFilter.tint(color = iconColor),
+                                alpha = iconAnimation
+                            )
+                        }
                     }
                 }
 
                 with(iconsToDraw[4]) {
                     // Right
-                    arrange(
-                        x = outerCircleRadius + (outerCircleRadius / 1.7f),
-                        y = placeableStartY
-                    ) {
-                        draw(iconsToDraw[4].intrinsicSize,
-                            colorFilter = ColorFilter.tint(color = iconColor))
+
+                    rotate(iconRotationAnimation.value) {
+                        arrange(
+                            x = outerCircleRadius + (outerCircleRadius / 1.7f),
+                            y = placeableStartY
+                        ) {
+                            draw(
+                                iconsToDraw[4].intrinsicSize,
+                                colorFilter = ColorFilter.tint(color = iconColor),
+                                alpha = iconAnimation
+                            )
+                            durationAnimationState = 150
+                        }
                     }
 
                 }
 
                 with(iconsToDraw[5]) {
 
-                    arrange(
-                        x = outerCircleRadius + (outerCircleRadius / 1.7f),
-                        y = placeableStartY + 500
-                    ) {
-                        draw(
-                            iconsToDraw[5].intrinsicSize,
-                            colorFilter = ColorFilter.tint(color = iconColor)
-                        )
+                    rotate(iconRotationAnimation.value) {
+                        arrange(
+                            x = outerCircleRadius + (outerCircleRadius / 1.7f),
+                            y = placeableStartY + 500
+                        ) {
+                            draw(
+                                iconsToDraw[5].intrinsicSize,
+                                colorFilter = ColorFilter.tint(color = iconColor),
+                                alpha = iconAnimation
+                            )
+                            durationAnimationState = 200
+                        }
                     }
                 }
+
+                with(iconsToDraw[1]) {
+                    rotate(iconRotationAnimation.value) {
+                        arrange(
+                            x = outerCircleRadius - (iconsToDraw[1].intrinsicSize.width / 2),
+                            y = placeableStartY * 1.82f
+                        ) {
+                            draw(
+                                iconsToDraw[1].intrinsicSize,
+                                colorFilter = ColorFilter.tint(color = iconColor),
+                                alpha = iconAnimation
+                            )
+                            durationAnimationState = 250
+                        }
+                    }
+                }
+
+                with(iconsToDraw[2]) {
+                    // Left icon
+                    rotate(iconRotationAnimation.value) {
+                        arrange(
+                            x = outerCircleRadius - (outerCircleRadius / 1.5f),
+                            y = placeableStartY
+                        ) {
+                            draw(
+                                iconsToDraw[2].intrinsicSize,
+                                colorFilter = ColorFilter.tint(color = iconColor),
+                                alpha = iconAnimation
+                            )
+                            durationAnimationState = 300
+                        }
+                    }
+
+                }
+
+                with(iconsToDraw[3]) {
+
+                    rotate(iconRotationAnimation.value) {
+                        arrange(
+                            x = outerCircleRadius - (outerCircleRadius / 1.4f),
+                            y = placeableStartY + 500
+                        ) {
+                            draw(
+                                iconsToDraw[3].intrinsicSize,
+                                colorFilter = ColorFilter.tint(color = iconColor),
+                                alpha = iconAnimation
+                            )
+                            durationAnimationState = 350
+                        }
+                    }
+                }
+
 
             }
         })

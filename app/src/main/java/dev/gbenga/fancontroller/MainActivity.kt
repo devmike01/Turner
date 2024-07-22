@@ -67,8 +67,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-
 data class ClockStyle(
     val secondsDialStyle: DialStyle = DialStyle(),
 )

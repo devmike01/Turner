@@ -35,7 +35,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.foundation:foundation-android:1.6.8@aar")
+    implementation(libs.androidx.animation.graphics.android)
+    implementation(libs.androidx.animation.core.android)
+    implementation(libs.androidx.foundation.android)
     implementation (libs.androidx.runtime)
     implementation(libs.ui.graphics)
     implementation(libs.androidx.activity.compose)
