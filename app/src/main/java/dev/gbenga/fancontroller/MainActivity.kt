@@ -132,6 +132,8 @@ fun Clock(
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
+    val num = 9
+
     val turnerState = rememberTurnerState()
 
     Turner(modifier = Modifier.fillMaxSize(),

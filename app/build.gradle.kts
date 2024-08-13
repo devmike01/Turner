@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":sample"))
     implementation ("androidx.compose.runtime:runtime:1.6.8")
     implementation(project(":turner"))
     implementation(libs.androidx.core.ktx)
