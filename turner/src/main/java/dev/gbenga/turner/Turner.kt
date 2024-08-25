@@ -1,9 +1,11 @@
 package dev.gbenga.turner
 
+import android.graphics.Point
 import android.util.Log
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
@@ -68,18 +70,16 @@ fun Turner(
         mutableStateOf(Size.Zero)
     }
 
-    val coroutineScope = rememberCoroutineScope()
-
     // TODO: To use with icon click later on
     var turnerRotateDegree by remember {
         mutableFloatStateOf(0f)
     }
 
-    val iconsToDraw = icons.map {imageVector ->
-        IconData(rememberVectorPainter(image = imageVector),
-            remember { Animatable(0f) },
-            remember { Animatable(0f) })
+    val iconAnim = remember {
+        Animatable(0f)
     }
+
+    val iconVectors = icons.map { rememberVectorPainter(image = it)  }
 
     var iconColor by remember {
         mutableStateOf(Color.Gray)
@@ -89,52 +89,52 @@ fun Turner(
         mutableStateOf(true)
     }
 
-    var iconAnimationState by remember {
-        mutableFloatStateOf(0f)
-    }
-    var durationAnimationState by remember {
-        mutableIntStateOf(100)
-    }
+    var iconPoint: Offset = Offset.Zero
 
     val radiusAnimation = remember { Animatable(0f) }
+    var smallCircleCenter by remember {
+        mutableStateOf(Offset.Zero)
+    }
+
+    var smallCircleRadius by remember {
+        mutableFloatStateOf(0f)
+    }
+
+    var smallerCircleRadius by remember {
+        mutableFloatStateOf(0f)
+    }
 
     val outerCircleRadius = size.width / 2
+
+    val negativePadding = 40
+    val iconSpacing by remember {
+        derivedStateOf { 360 / iconVectors.size }
+    }
+
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(outerCircleState) {
 
         val animationSpec = tween<Float>(
-            durationMillis = 200,
-            easing = LinearEasing
+            durationMillis =100,
+            easing = FastOutLinearInEasing
         )
 
         launch {
             if(outerCircleState){
-                iconAnimationState = 0f
-                async {
-                    iconsToDraw.forEachIndexed { index, icon ->
-                        icon.circleAnim.animateTo(0f,
-                            animationSpec = animationSpec)
-                        icon.fadeAnim.animateTo(0f,
-                            animationSpec = animationSpec)
-                    }
-                }.await()
+
+                iconAnim.animateTo(0f,
+                    animationSpec = animationSpec)
                 radiusAnimation.animateTo(0f)
 
             }else{
-                iconAnimationState = 1f
-                val space = 360f / iconsToDraw.size
-                launch { iconsToDraw.forEachIndexed { index, icon ->
-
-                    icon.fadeAnim.animateTo(1f,
-                        animationSpec = animationSpec)
-                    icon.circleAnim.animateTo(index * space,
-                        animationSpec = animationSpec)
-                }
-                }
                 radiusAnimation.animateTo(outerCircleRadius)
+                iconAnim.animateTo(1f,
+                    animationSpec = animationSpec)
             }
         }
     }
+
 
 
     Box(modifier = modifier
@@ -147,20 +147,41 @@ fun Turner(
             }
         }
         .pointerInput(Unit) {
-            detectTapGestures {
-                outerCircleState = !outerCircleState
-            }
+            detectTapGestures(onTap = { point ->
+                // Calculate the radian of the inner circle
+                iconVectors.forEachIndexed { index, vectorPainter ->
+                    val degree = (iconSpacing * index).toDouble()
+                    val x =
+                        (smallCircleCenter.x + (smallCircleRadius
+                                * sin(Math.toRadians(degree))) - negativePadding).toFloat()
+                    val y =
+                        (smallCircleCenter.y + (smallCircleRadius
+                                * cos(Math.toRadians(degree))) - negativePadding).toFloat()
+
+                    Log.d("pointerInput", " --> ${point.y} - ${y}")
+
+                }
+                //smallCircleCenter
+                // Under this
+
+                if ((point.x <= (smallCircleCenter.x + smallerCircleRadius)
+                            && point.x > (smallCircleCenter.x - smallerCircleRadius))
+                    && (point.y <= (smallCircleCenter.y + smallerCircleRadius)
+                            && point.y >= (smallCircleCenter.y - smallerCircleRadius))) {
+                    outerCircleState = !outerCircleState
+                }
+            })
 
         }
         .drawWithCache {
             //val center =
             onDrawWithContent {
 
-                val smallCircleRadius = size.width / 3.5f
+                smallCircleRadius = size.width / 3.5f
                 val outerCircleCenter = Offset(x = size.width / 2, y = size.height / 2)
-
+                smallerCircleRadius = size.width / 5
                 val innerStrokeRadius = size.width / 6
-                Log.d("detectTapGestures#1", "x: ${innerStrokeRadius}")
+                smallCircleCenter = Offset(x = size.width / 2, y = size.height / 2)
 
                 // Outer circle
                 drawCircle(
@@ -173,12 +194,12 @@ fun Turner(
                 drawCircle(
                     color = Color(0xFF131415),
                     radius = smallCircleRadius,
-                    center = Offset(x = size.width / 2, y = size.height / 2)
+                    center = smallCircleCenter
                 ) // Small circle
                 drawCircle(
                     color = Color(0xFF131415),
-                    radius = size.width / 5,
-                    center = Offset(x = size.width / 2, y = size.height / 2),
+                    radius = smallerCircleRadius,
+                    center = smallCircleCenter,
                 ) // Smaller circle
 
                 val strokeDiameter = (2 * innerStrokeRadius)
@@ -233,19 +254,23 @@ fun Turner(
                 // Very Bad unsscallable code. But I'm too tired to fix it.
 
                 val iconPlaceableRadius = outerCircleRadius - 120
-                val negativePadding = 40
-
-                iconsToDraw.forEach{icon ->
-                    with(icon.painter) {
+                iconVectors.forEachIndexed { index, icon ->
+                    with(icon) {
+                        //iconSpacing * index
+                        val degree = (iconSpacing * index).toDouble()
+                        iconPoint = Offset(
+                            x = (center.x + (iconPlaceableRadius * sin(Math.toRadians(degree))) - negativePadding).toFloat(),
+                            y = (center.y + (iconPlaceableRadius * cos(Math.toRadians(degree))) - negativePadding).toFloat()
+                        )
 
                         arrange(
-                            x = (center.x + (iconPlaceableRadius * sin(Math.toRadians(icon.circleAnim.value.toDouble()))) -negativePadding).toFloat(),
-                            y = (center.y + (iconPlaceableRadius * cos(Math.toRadians(icon.circleAnim.value.toDouble()))) -negativePadding).toFloat()
+                            x = iconPoint.x,
+                            y = iconPoint.y
                         ) {
                             draw(
-                                this@with.intrinsicSize,
+                                icon.intrinsicSize * iconAnim.value,
                                 colorFilter = ColorFilter.tint(color = iconColor),
-                                alpha = icon.fadeAnim.value
+                                // alpha = iconAnim.value
                             )
                         }
                     }

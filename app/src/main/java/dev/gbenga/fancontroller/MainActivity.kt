@@ -1,6 +1,10 @@
 package dev.gbenga.fancontroller
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Message
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -64,6 +68,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        val handlerThread = HandlerThread("hello")
+        handlerThread.start()
+        val handler = Handler(handlerThread.looper) { msg ->
+            Log.d("handlerThread", "${msg.data}")
+            false
+        }
+        val msg = Message.obtain()
+        handler.sendMessageDelayed(msg, 12000)
     }
 }
 
