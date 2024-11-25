@@ -1,20 +1,12 @@
 package dev.gbenga.turner
 
-import android.graphics.Point
 import android.util.Log
-import android.widget.ImageView
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateValueAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -33,29 +25,25 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastForEachIndexed
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlin.math.PI
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.tan
+import kotlin.math.tanh
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Composable
@@ -75,6 +63,10 @@ fun Turner(
         mutableFloatStateOf(0f)
     }
 
+
+    val turnerRotateDegreeAnim: Float by animateFloatAsState(turnerRotateDegree, label = "turnerRotateDegree")
+
+
     val iconAnim = remember {
         Animatable(0f)
     }
@@ -89,7 +81,6 @@ fun Turner(
         mutableStateOf(true)
     }
 
-    var iconPoint: Offset = Offset.Zero
 
     val radiusAnimation = remember { Animatable(0f) }
     var smallCircleCenter by remember {
@@ -106,10 +97,11 @@ fun Turner(
 
     val outerCircleRadius = size.width / 2
 
-    val negativePadding = 40
     val iconSpacing by remember {
         derivedStateOf { 360 / iconVectors.size }
     }
+
+    var selectedIconPos by remember { mutableIntStateOf(6) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -128,15 +120,14 @@ fun Turner(
                 radiusAnimation.animateTo(0f)
 
             }else{
+                launch { iconAnim.animateTo(1f,
+                    animationSpec = animationSpec) }
                 radiusAnimation.animateTo(outerCircleRadius)
-                iconAnim.animateTo(1f,
-                    animationSpec = animationSpec)
             }
         }
     }
 
-
-
+    val clickCoords = HashMap<Int, ClickBound>()
     Box(modifier = modifier
         .onGloballyPositioned { layoutCoords ->
             size = layoutCoords.size.let {
@@ -149,25 +140,30 @@ fun Turner(
         .pointerInput(Unit) {
             detectTapGestures(onTap = { point ->
                 // Calculate the radian of the inner circle
-                iconVectors.forEachIndexed { index, vectorPainter ->
-                    val degree = (iconSpacing * index).toDouble()
-                    val x =
-                        (smallCircleCenter.x + (smallCircleRadius
-                                * sin(Math.toRadians(degree))) - negativePadding).toFloat()
-                    val y =
-                        (smallCircleCenter.y + (smallCircleRadius
-                                * cos(Math.toRadians(degree))) - negativePadding).toFloat()
+                // Log.d("pointerInput", " --> $point")
 
-                    Log.d("pointerInput", " --> ${point.y} - ${y}")
+                // Handle item click
+                clickCoords.forEach { (iconPos, clickPointer) ->
 
+                    val degree = (iconSpacing * (iconPos)).toDouble()
+                    if (point.y >= clickPointer.start.y && point.y <= clickPointer.end.y
+                        && point.x >= clickPointer.start.x && point.x <= clickPointer.end.x
+                    ) {
+                        selectedIconPos = iconPos
+                        /**
+                         * Right and left icon is good but not the rest when rotating switch
+                         */
+                        turnerRotateDegree = (360f / clickCoords.size) * iconPos
+                        Log.d("pointerInput", " -> $turnerRotateDegree ${60f * iconPos} $iconPos")
+
+                    }
                 }
-                //smallCircleCenter
-                // Under this
-
+                // Open controller
                 if ((point.x <= (smallCircleCenter.x + smallerCircleRadius)
                             && point.x > (smallCircleCenter.x - smallerCircleRadius))
                     && (point.y <= (smallCircleCenter.y + smallerCircleRadius)
-                            && point.y >= (smallCircleCenter.y - smallerCircleRadius))) {
+                            && point.y >= (smallCircleCenter.y - smallerCircleRadius))
+                ) {
                     outerCircleState = !outerCircleState
                 }
             })
@@ -206,7 +202,7 @@ fun Turner(
                 val pointerWidth = 50f
 //                // Strokes
                 drawCircle(
-                    color = Color.White.copy(alpha = .1f),
+                    color = Color.Green.copy(alpha = .1f),
                     radius = (innerStrokeRadius * 1.1f),
                     center = Offset(x = size.width / 2, y = size.height / 2),
                     style = Stroke(width = 3f)
@@ -220,7 +216,7 @@ fun Turner(
                     style = Stroke(width = 30f)
                 ) // First inner stroke
 
-                rotate(degrees = turnerRotateDegree) {
+                rotate(degrees = turnerRotateDegreeAnim) {
                     // Draw controller inner line
                     drawPath(
                         Path().apply {
@@ -253,31 +249,84 @@ fun Turner(
 
                 // Very Bad unsscallable code. But I'm too tired to fix it.
 
-                val iconPlaceableRadius = outerCircleRadius - 120
-                iconVectors.forEachIndexed { index, icon ->
+                // val iconPlaceableRadius = smallCircleCenter - 270
+                iconVectors.forEachIndexed(1) { index, icon ->
                     with(icon) {
                         //iconSpacing * index
                         val degree = (iconSpacing * index).toDouble()
-                        iconPoint = Offset(
-                            x = (center.x + (iconPlaceableRadius * sin(Math.toRadians(degree))) - negativePadding).toFloat(),
-                            y = (center.y + (iconPlaceableRadius * cos(Math.toRadians(degree))) - negativePadding).toFloat()
+
+                        //calculate the offset
+                        val stepsLabelOffset = Offset(
+                            x = center.x + (smallCircleRadius * 1.4f) * cos(
+                                degree * (Math.PI / 180)
+                            ).toFloat(),
+                            y = center.y - (smallCircleRadius * 1.4f) * sin(
+                                degree * (Math.PI / 180)
+                            ).toFloat()
+                        )
+
+                        //subtract the label width and height to position label at the center of the step
+                        val stepsLabelTopLeft = Offset(
+                            stepsLabelOffset.x - (icon.intrinsicSize.width / 2.3F),
+                            stepsLabelOffset.y - (icon.intrinsicSize.height / 2)
                         )
 
                         arrange(
-                            x = iconPoint.x,
-                            y = iconPoint.y
-                        ) {
+                            x = stepsLabelTopLeft.x,
+                            y = stepsLabelTopLeft.y
+                        ) { x, y ->
+                            clickCoords[index] = ClickBound(
+                                start = Offset(x, y),
+                                end = Offset(
+                                    x + icon.intrinsicSize.width,
+                                    y + icon.intrinsicSize.height
+                                )
+                            )
                             draw(
                                 icon.intrinsicSize * iconAnim.value,
-                                colorFilter = ColorFilter.tint(color = iconColor),
+                                colorFilter = ColorFilter.tint(
+                                    color = if (selectedIconPos == index) {
+                                        Color.Green
+                                    } else {
+                                        iconColor
+                                    }
+                                ),
                                 // alpha = iconAnim.value
                             )
                         }
+
                     }
                 }
             }
         })
 }
+
+
+fun <T> Iterable<T>.forEachIndexed(start: Int, action: (Int, T) -> Unit){
+    this.forEachIndexed{i, data ->
+        val index = start + i
+        if (index <= this.count()){
+            Log.d("MangoTango1", "index: $index")
+            action(index, data)
+        }else{
+            return
+        }
+    }
+}
+
+
+fun getDegreesFromPoint(x: Double, y: Double): Float {
+    // Use atan2 to calculate the angle in radians
+    val radians = atan2(y, x)
+    // Convert radians to degrees
+    var degrees = Math.toDegrees(radians)
+    // Ensure the angle is in the range [0, 360]
+//    if (degrees < 0) {
+//        degrees += 360.0
+//    }
+    return degrees.toFloat()
+}
+
 
 fun Float.getX(centerX: Float, angleInDegrees: Float): Float{
     return (centerX + (this * (cos(angleInDegrees) * (PI/ 180)))).toFloat()
@@ -287,9 +336,9 @@ fun Float.getY(centerY: Float, angleInDegrees: Float): Float{
     return (centerY - (this * sin(angleInDegrees) * (PI/ 180))).toFloat()
 }
 
-fun DrawScope.arrange(x: Float, y: Float, block: DrawScope.() -> Unit){
+fun DrawScope.arrange(x: Float, y: Float, block: DrawScope.(Float, Float) -> Unit){
     translate(left = x,
-        top = y, block = block)
+        top = y, block = {block(x, y)})
 }
 
 
@@ -304,7 +353,4 @@ fun rememberTurnerState(key: Any? = null): TurnerState {
     }
 }
 
-/*
-(left =(10* 90)/ Math.PI.toFloat(),
-                        top = (10* 90)/ Math.PI.toFloat())
- */
+data class ClickBound(val start: Offset, val end: Offset)

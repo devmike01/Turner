@@ -150,10 +150,13 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     val turnerState = rememberTurnerState()
 
     Turner(modifier = Modifier.fillMaxSize(),
-        turnerState= turnerState, icons = listOf(
+        turnerState= turnerState, icons = listOf( //baseline_phone_24
             ImageVector.vectorResource(id = R.drawable.ic_android_black_24dp),
-            Icons.Default.Call, Icons.Default.Build,
-            Icons.Default.DateRange, Icons.Default.Email, Icons.Default.Face
+            ImageVector.vectorResource(id = R.drawable.baseline_phone_24),
+            ImageVector.vectorResource(id = R.drawable.baseline_message_24),
+            ImageVector.vectorResource(id = R.drawable.baseline_phone_24),
+            ImageVector.vectorResource(id = R.drawable.ic_android_black_24dp),
+            ImageVector.vectorResource(id = R.drawable.baseline_message_24),
         )
     )
 }
