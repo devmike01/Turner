@@ -94,42 +94,14 @@ fun Clock(
 
     var minuteRotation by remember { mutableStateOf(0f) }
 
-    var secondRotation by remember { mutableStateOf(0f) }
-
-    //secondRotation is updated by 6 degree clockwise every one second
-    //here rotation is in negative, in order to get clockwise rotation
-    LaunchedEffect(key1 = true) {
-        while (true) {
-            //in-order to get smooth transition we are updating rotation angle every 16ms
-            //1000ms -> 6 degree
-            //16ms -> 0.096
-            delay(16)
-            secondRotation -= 0.096f
-        }
-    }
-
     //minuteRotation is updated by 0.1 degree clockwise every one second
     //here rotation is in negative, in order to get clockwise rotation
-    LaunchedEffect(key1 = true) {
-        while (true) {
-            delay(1000)
-            minuteRotation -= 0.1f
-        }
-    }
 
     Canvas(
         modifier = modifier
     ) {
         val outerRadius = minOf(this.size.width, this.size.height) / 2f
         val innerRadius = outerRadius - 60.dp.toPx()
-
-        //Seconds Dial
-//        dial(
-//            radius = outerRadius,
-//            rotation = secondRotation,
-//            textMeasurer = textMeasurer,
-//            dialStyle = clockStyle.secondsDialStyle
-//        )
 
         //Minute Dial
         dial(
@@ -148,6 +120,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     val num = 9
 
     val turnerState = rememberTurnerState()
+
+    val selectedPosition = turnerState.rememberSelectedPosition()
+    Log.d("Greeting", "turnerState _ ${selectedPosition.value}")
 
     Turner(modifier = Modifier.fillMaxSize(),
         turnerState= turnerState, icons = listOf( //baseline_phone_24
