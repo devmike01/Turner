@@ -38,4 +38,5 @@ alt="Devmike01's Turner demo" width="220" height="400" />
 ### Contributions
 Feel free to submit PRs
 
-### License
+### Known issue(s)
+- Turner's state is lost when device's screen is rotated
