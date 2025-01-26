@@ -3,9 +3,9 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     id ( "maven-publish")
-
 }
 
+group="dev.gbenga.turner"
 
 android {
     namespace = "dev.gbenga.turner"
@@ -47,7 +47,10 @@ android {
 afterEvaluate {
     publishing {
         publications {
-            create<MavenPublication>("Maven"){
+            create<MavenPublication>("maven"){
+                groupId = "dev.devmike01.turner"
+                artifactId = "turner"
+                version = "0.1.0"
                 from(components["release"])
             }
         }
