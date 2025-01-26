@@ -2,8 +2,10 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    id ( "maven-publish")
 
 }
+
 
 android {
     namespace = "dev.gbenga.turner"
@@ -14,7 +16,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
     }
+
 
     buildTypes {
         release {
@@ -32,7 +36,25 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    publishing {
+        singleVariant("release")
+       // withSourcesJar()
+    }
+
 }
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release"){
+                from(components["release"])
+            }
+        }
+    }
+}
+
+
 
 dependencies {
     implementation(libs.androidx.animation.graphics.android)
@@ -53,3 +75,4 @@ dependencies {
     // https://mvnrepository.com/artifact/io.mockk/mockk-android
     testImplementation(libs.mockk.test)
 }
+
