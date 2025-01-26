@@ -43,7 +43,7 @@ class TurnerPresenterImpl : TurnerPresenter {
         get() = _presenterState
 
     override fun destroy() {
-        System.out.println("Presenter destroyed")
+
     }
 
 
