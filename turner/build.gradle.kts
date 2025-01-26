@@ -47,7 +47,7 @@ android {
 afterEvaluate {
     publishing {
         publications {
-            create<MavenPublication>("release"){
+            create<MavenPublication>("Maven"){
                 from(components["release"])
             }
         }
