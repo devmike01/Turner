@@ -67,7 +67,8 @@ class MainActivity : ComponentActivity() {
             FanControllerTheme {
                 val context = LocalContext.current
 
-                Scaffold(modifier = Modifier.fillMaxSize(), containerColor = Color.White) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize(),
+                    containerColor = Color.DarkGray) { innerPadding ->
 
                     val turnerState = rememberTurnerState()
 
@@ -80,7 +81,7 @@ class MainActivity : ComponentActivity() {
 
                     Log.d("Greeting", "turnerState _ ${selectedPosition.value}")
 
-                    Turner(modifier = Modifier.fillMaxSize(),
+                    Turner(modifier = Modifier.fillMaxSize().padding(innerPadding),
                         turnerState= turnerState, icons = listOf( //baseline_phone_24
                             Icons.Default.Build,
                             Icons.Default.Face,
