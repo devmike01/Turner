@@ -91,7 +91,6 @@ class MainActivity : ComponentActivity() {
                             Icons.Default.AccountCircle,
                         )
                     )
-                   // Clock(modifier = Modifier.padding(innerPadding).size(320.dp))
                 }
             }
         }

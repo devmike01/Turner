@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.vector.VectorPainter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import dev.gbenga.turner.extentions.forEachIndexed
 import dev.gbenga.turner.presenter.TurnerPresenter
 import dev.gbenga.turner.presenter.TurnerPresenterState
 import dev.gbenga.turner.presenter.rememberTurnerPresenter
@@ -55,7 +56,7 @@ fun Turner(
     modifier: Modifier = Modifier,
     icons: List<ImageVector>,
     turnerState: TurnerState,
-    radius: Float = 400f, //373A40
+    radius: Float = 400f,
     controlColor: Color = Color(0xFF222424),
     selectedColor: Color = Color.Green,
     unselectColor: Color = Color.LightGray.copy(alpha = .1f)
@@ -69,9 +70,6 @@ fun Turner(
     }
 
     var turnerSize by remember { mutableStateOf(Size.Zero) }
-
-    // TODO: To use with icon click later on
-
 
     val turnerRotateDegreeAnim: Float by animateFloatAsState(
         turnerPresenterState.turnerRotateDegree,
@@ -245,8 +243,6 @@ fun ContentDrawScope.drawAlongSideContent(presenter: TurnerPresenter,
 
     presenter.updateSmallCircleRadius(turnerPresenterState.outerCircleRadius / 3)
 
-    // Very Bad unsscallable code. But I'm too tired to fix it.
-
     drawTurnerCircleLayers(turnerRotateDegreeAnim, presenter, turnerPresenterState,
         radiusAnimation, controlColor)
 
@@ -360,16 +356,6 @@ fun DrawScope.drawControlWithPointer(turnerRotateDegreeAnim: Float,
 }
 
 
-fun <T> Iterable<T>.forEachIndexed(start: Int, action: (Int, T) -> Unit){
-    this.forEachIndexed{i, data ->
-        val index = start + i
-        if (index <= this.count()){
-            action(index, data)
-        }else{
-            return
-        }
-    }
-}
 
 fun DrawScope.arrange(x: Float, y: Float, block: DrawScope.(Float, Float) -> Unit){
     translate(left = x,
@@ -378,5 +364,3 @@ fun DrawScope.arrange(x: Float, y: Float, block: DrawScope.(Float, Float) -> Uni
 
 
 
-
-data class ClickBound(val start: Offset, val end: Offset)
