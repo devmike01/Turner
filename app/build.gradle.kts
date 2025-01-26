@@ -69,5 +69,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("com.github.devmike01:Turner:7e2b6998f9")
+    implementation("com.github.devmike01:Turner:0.1.1-alpha01")
 }
