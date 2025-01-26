@@ -24,7 +24,8 @@ class ClickHandlerImpl: ClickHandler{
 
     private val clickCoordinates = HashMap<Int, ClickBound>()
 
-    override fun handleIconClick(point: Offset, smallCircleCenter: Offset, smallerCircleRadius: Float,
+    override fun handleIconClick(point: Offset, smallCircleCenter: Offset,
+                                 smallerCircleRadius: Float,
                         onClickPosition: (Int, Offset) -> Unit){
         // Handle item click
         clickCoordinates.forEach { (iconPos, clickPointer) ->

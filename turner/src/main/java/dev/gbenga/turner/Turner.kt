@@ -55,7 +55,7 @@ fun Turner(
     modifier: Modifier = Modifier,
     icons: List<ImageVector>,
     turnerState: TurnerState,
-    radius: Float = 500f, //373A40
+    radius: Float = 400f, //373A40
     controlColor: Color = Color(0xFF222424),
     selectedColor: Color = Color.Green,
     unselectColor: Color = Color.LightGray.copy(alpha = .1f)
@@ -144,7 +144,7 @@ fun Turner(
                      * Right and left icon is good but not the rest when rotating switch
                      */
                     presenter.updateTurnerRotateDegree(-((360f / clickHandler.buttonCount) * iconPos))
-                    turnerState.set(iconPos)
+                    turnerState.set(icons.size - iconPos)
 
                     coroutine.launch {
                         presenter.updateEffectAnim(true)
@@ -182,7 +182,8 @@ fun Turner(
 fun ContentDrawScope.drawTurnerCircleLayers(
     turnerRotateDegreeAnim: Float,
     presenter: TurnerPresenter, turnerPresenterState : TurnerPresenterState,
-    radiusAnimation: Animatable<Float, AnimationVector1D>, controlColor: Color,){
+    radiusAnimation: Animatable<Float, AnimationVector1D>,
+    controlColor: Color,){
     val outerCircleCenter = Offset(x = size.width / 2, y = size.height / 2)
     // smallerCircleRadius = 30f // size.width / 5
     val innerStrokeRadius = turnerPresenterState.smallCircleRadius
@@ -210,10 +211,9 @@ fun ContentDrawScope.drawTurnerCircleLayers(
     ) // Smaller circle
 
     val strokeDiameter = (turnerPresenterState.outerCircleRadius / 1.7f)
-    val pointerWidth = 50f
-//                // Strokes
 
-    drawControlWithPointer(turnerRotateDegreeAnim, strokeDiameter, pointerWidth)
+    drawControlWithPointer(turnerRotateDegreeAnim, strokeDiameter, 30f)
+
     drawCircle(
         color = Color.Green.copy(alpha = .1f),
         radius = (innerStrokeRadius * 1.2f),
@@ -259,10 +259,10 @@ fun ContentDrawScope.drawAlongSideContent(presenter: TurnerPresenter,
             //calculate the offset
             val stepsLabelOffset = Offset(
                 x = center.x + (turnerPresenterState.outerCircleRadius / 1.3f) * cos(
-                    degree * (java.lang.Math.PI / 180)
+                    degree * (Math.PI / 180)
                 ).toFloat(),
                 y = center.y - (turnerPresenterState.outerCircleRadius / 1.3f) * sin(
-                    degree * (java.lang.Math.PI / 180)
+                    degree * (Math.PI / 180)
                 ).toFloat()
             )
 
@@ -276,7 +276,7 @@ fun ContentDrawScope.drawAlongSideContent(presenter: TurnerPresenter,
                 x = stepsLabelOffset.x,
                 y = stepsLabelOffset.y
             ) { _, _ ->
-                val brush = androidx.compose.ui.graphics.Brush.sweepGradient(
+                val brush = Brush.sweepGradient(
                     listOf(if(turnerPresenterState.clicked
                     && turnerPresenterState.selectedItemPos == index){
                     Color.Cyan.copy(alpha = .2f)
@@ -308,7 +308,7 @@ fun ContentDrawScope.drawAlongSideContent(presenter: TurnerPresenter,
                 )
                 draw(
                     icon.intrinsicSize * iconAnim.value,
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(
+                    colorFilter = ColorFilter.tint(
                         color = if (turnerPresenterState.selectedItemPos == index) {
                             selectedColor
                         } else {
@@ -350,7 +350,7 @@ fun DrawScope.drawControlWithPointer(turnerRotateDegreeAnim: Float,
         drawRoundRect(
             color = Color.Green,
             topLeft = Offset(
-                size.width / 1.75f,
+                size.width / 1.78f,
                 size.height / 2
             ),
             size = Size(pointerWidth, 10f),
@@ -364,21 +364,11 @@ fun <T> Iterable<T>.forEachIndexed(start: Int, action: (Int, T) -> Unit){
     this.forEachIndexed{i, data ->
         val index = start + i
         if (index <= this.count()){
-            Log.d("MangoTango1", "index: $index")
             action(index, data)
         }else{
             return
         }
     }
-}
-
-
-fun Float.getX(centerX: Float, angleInDegrees: Float): Float{
-    return (centerX + (this * (cos(angleInDegrees) * (PI/ 180)))).toFloat()
-}
-
-fun Float.getY(centerY: Float, angleInDegrees: Float): Float{
-    return (centerY - (this * sin(angleInDegrees) * (PI/ 180))).toFloat()
 }
 
 fun DrawScope.arrange(x: Float, y: Float, block: DrawScope.(Float, Float) -> Unit){

@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,13 +14,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -35,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -59,175 +65,36 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FanControllerTheme {
+                val context = LocalContext.current
+
                 Scaffold(modifier = Modifier.fillMaxSize(), containerColor = Color.White) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+
+                    val turnerState = rememberTurnerState()
+
+                    val selectedPosition = turnerState.rememberSelectedPosition()
+
+                    LaunchedEffect(selectedPosition.value) {
+                        Toast.makeText(context,"clicked: ${selectedPosition.value}",
+                            Toast.LENGTH_SHORT).show()
+                    }
+
+                    Log.d("Greeting", "turnerState _ ${selectedPosition.value}")
+
+                    Turner(modifier = Modifier.fillMaxSize(),
+                        turnerState= turnerState, icons = listOf( //baseline_phone_24
+                            Icons.Default.Build,
+                            Icons.Default.Face,
+                            Icons.Default.ShoppingCart,
+                            Icons.Default.Notifications,
+                            Icons.Default.Delete,
+                            Icons.Default.AccountCircle,
+                        )
                     )
                    // Clock(modifier = Modifier.padding(innerPadding).size(320.dp))
                 }
             }
         }
 
-        val handlerThread = HandlerThread("hello")
-        handlerThread.start()
-        val handler = Handler(handlerThread.looper) { msg ->
-            Log.d("handlerThread", "${msg.data}")
-            false
-        }
-        val msg = Message.obtain()
-        handler.sendMessageDelayed(msg, 12000)
     }
 }
 
-data class ClockStyle(
-    val secondsDialStyle: DialStyle = DialStyle(),
-)
-
-@OptIn(ExperimentalTextApi::class)
-@Composable
-fun Clock(
-    modifier: Modifier = Modifier.size(320.dp),
-    clockStyle: ClockStyle = ClockStyle()
-) {
-    val textMeasurer = rememberTextMeasurer()
-
-    var minuteRotation by remember { mutableStateOf(0f) }
-
-    //minuteRotation is updated by 0.1 degree clockwise every one second
-    //here rotation is in negative, in order to get clockwise rotation
-
-    Canvas(
-        modifier = modifier
-    ) {
-        val outerRadius = minOf(this.size.width, this.size.height) / 2f
-        val innerRadius = outerRadius - 60.dp.toPx()
-
-        //Minute Dial
-        dial(
-            radius = innerRadius,
-            rotation = minuteRotation,
-            textMeasurer = textMeasurer,
-            dialStyle = clockStyle.secondsDialStyle
-        )
-    }
-}
-
-
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    val num = 9
-
-    val turnerState = rememberTurnerState()
-
-    val selectedPosition = turnerState.rememberSelectedPosition()
-    Log.d("Greeting", "turnerState _ ${selectedPosition.value}")
-
-    Turner(modifier = Modifier.fillMaxSize(),
-        turnerState= turnerState, icons = listOf( //baseline_phone_24
-            ImageVector.vectorResource(id = R.drawable.ic_android_black_24dp),
-            ImageVector.vectorResource(id = R.drawable.baseline_phone_24),
-            ImageVector.vectorResource(id = R.drawable.baseline_message_24),
-            ImageVector.vectorResource(id = R.drawable.baseline_phone_24),
-            ImageVector.vectorResource(id = R.drawable.ic_android_black_24dp),
-            ImageVector.vectorResource(id = R.drawable.baseline_message_24),
-        )
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FanControllerTheme {
-        Greeting("Android")
-    }
-}
-
-data class DialStyle(
-    val stepsWidth: Dp = 1.2.dp,
-    val stepsColor: Color = Color.Black,
-    val normalStepsLineHeight: Dp = 8.dp,
-    val fiveStepsLineHeight: Dp = 16.dp,
-    val stepsTextStyle: TextStyle = TextStyle(),
-    val stepsLabelTopPadding: Dp = 12.dp,
-)
-
-
-@OptIn(ExperimentalTextApi::class)
-fun DrawScope.dial(
-    radius: Float,
-    rotation: Float,
-    textMeasurer: TextMeasurer,
-    dialStyle: DialStyle = DialStyle()
-) {
-    var stepsAngle = 0
-
-    //this will draw 60 steps
-    repeat(60) { steps ->
-
-        //fiveStep lineHeight > normalStep lineHeight
-        val stepsHeight = if (steps % 5 == 0) {
-            dialStyle.fiveStepsLineHeight.toPx()
-        } else {
-            dialStyle.normalStepsLineHeight.toPx()
-        }
-
-        //calculate steps, start and end offset
-        val stepsStartOffset = Offset(
-            x = center.x + (radius * cos((stepsAngle + rotation) * (Math.PI / 180f))).toFloat(),
-            y = center.y - (radius * sin((stepsAngle + rotation) * (Math.PI / 180))).toFloat()
-        )
-        val stepsEndOffset = Offset(
-            x = center.x + (radius - stepsHeight) * cos(
-                (stepsAngle + rotation) * (Math.PI / 180)
-            ).toFloat(),
-            y = center.y - (radius - stepsHeight) * sin(
-                (stepsAngle + rotation) * (Math.PI / 180)
-            ).toFloat()
-        )
-
-        //draw step
-        drawLine(
-            color = dialStyle.stepsColor,
-            start = stepsStartOffset,
-            end = stepsEndOffset,
-            strokeWidth = dialStyle.stepsWidth.toPx(),
-            cap = StrokeCap.Round
-        )
-
-        //draw steps labels
-        if (steps % 5 == 0) {
-            //measure the given label width and height
-            val stepsLabel = String.format("%02d", steps)
-            val stepsLabelTextLayout = textMeasurer.measure(
-                text = buildAnnotatedString { append(stepsLabel) },
-                style = dialStyle.stepsTextStyle
-            )
-
-            //calculate the offset
-            val stepsLabelOffset = Offset(
-                x = center.x + (radius - stepsHeight - dialStyle.stepsLabelTopPadding.toPx()) * cos(
-                    (stepsAngle + rotation) * (Math.PI / 180)
-                ).toFloat(),
-                y = center.y - (radius - stepsHeight - dialStyle.stepsLabelTopPadding.toPx()) * sin(
-                    (stepsAngle + rotation) * (Math.PI / 180)
-                ).toFloat()
-            )
-
-            //subtract the label width and height to position label at the center of the step
-            val stepsLabelTopLeft = Offset(
-                stepsLabelOffset.x - ((stepsLabelTextLayout.size.width) / 2f),
-                stepsLabelOffset.y - (stepsLabelTextLayout.size.height / 2f)
-            )
-
-            drawText(
-                textMeasurer = textMeasurer,
-                text = stepsLabel,
-                topLeft = stepsLabelTopLeft,
-                style = dialStyle.stepsTextStyle
-            )
-        }
-        stepsAngle += 6
-    }
-}
