@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.2"
+agp = "8.7.3"
 animationGraphicsAndroid = "1.6.8"
 animationCoreAndroid = "1.6.8"
 foundationAndroid = "1.6.8"
