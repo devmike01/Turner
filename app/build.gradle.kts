@@ -53,7 +53,7 @@ android {
 
 dependencies {
     implementation ("androidx.compose.runtime:runtime:1.6.8")
-    //implementation(project(":turner"))
+    implementation(project(":turner"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.ui)
@@ -69,5 +69,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("com.github.devmike01:Turner:0.1.1-alpha01")
 }
