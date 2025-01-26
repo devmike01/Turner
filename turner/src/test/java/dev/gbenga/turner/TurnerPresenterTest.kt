@@ -17,13 +17,6 @@ class TurnerPresenterTest {
 
     private val turnerPresenter: TurnerPresenter = TurnerPresenterImpl()
 
-    private lateinit var presenterState: TurnerPresenterState
-
-    @Before
-    fun setUp(){
-       // MockKAnnotations.init(this)
-    }
-
     private suspend fun getPresenterState() = turnerPresenter.presenterState.first()
 
     @Test
