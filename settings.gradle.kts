@@ -22,4 +22,3 @@ dependencyResolutionManagement {
 rootProject.name = "FanController"
 include(":app")
 include(":turner")
-include(":sample")
